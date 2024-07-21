@@ -1,0 +1,5 @@
+.env
+gen
+bin
+.idea
+vendor
