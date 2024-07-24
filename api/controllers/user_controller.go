@@ -28,8 +28,18 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.Name == "" || user.Email == "" || user.Password == "" {
-		err := errors.New("request body for creating user is missing")
+	if user.Name == "" {
+		err := errors.New("request body name for creating user is missing")
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	if user.Email == "" {
+		err := errors.New("request body email for creating user is missing")
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	if user.Password == "" {
+		err := errors.New("request body password for creating user is missing")
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
