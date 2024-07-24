@@ -93,7 +93,11 @@ func (u *User) Validate(action string) error {
 }
 
 func (u *User) SaveUser(db *gorm.DB) (*User, error) {
-	var err error
+	// To hash the password
+	err := u.BeforeSave()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	err = db.Debug().Create(&u).Error
 	if err != nil {
@@ -114,9 +118,7 @@ func (u *User) FindAllUser(db *gorm.DB) (*[]User, error) {
 }
 
 func (u *User) FindUserByID(db *gorm.DB, uid uint32) (*User, error) {
-	var err error
-
-	err = db.Debug().Model(User{}).Where("id = ?", uid).Take(&u).Error
+	err := db.Debug().Model(User{}).Where("id = ?", uid).Take(&u).Error
 	if err != nil {
 		return &User{}, err
 	}

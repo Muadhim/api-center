@@ -2,7 +2,6 @@ package api
 
 import (
 	"api-center/api/controllers"
-	"api-center/api/seeds"
 	"api-center/configs"
 	"log/slog"
 
@@ -22,7 +21,7 @@ func Run() {
 
 	server.Initialize(config)
 
-	seeds.Load(server.DB)
+	// seeds.Load(server.DB)
 
 	server.Run(config.ServerPort)
 }

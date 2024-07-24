@@ -14,5 +14,9 @@ func FormatError(err string) error {
 		return errors.New("Email Already Taken")
 	}
 
+	if strings.Contains(err, "password") {
+		return errors.New("Incorrect Password")
+	}
+
 	return errors.New("Incorrect Details")
 }

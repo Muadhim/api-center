@@ -28,22 +28,6 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.Name == "" {
-		err := errors.New("request body name for creating user is missing")
-		responses.ERROR(w, http.StatusBadRequest, err)
-		return
-	}
-	if user.Email == "" {
-		err := errors.New("request body email for creating user is missing")
-		responses.ERROR(w, http.StatusBadRequest, err)
-		return
-	}
-	if user.Password == "" {
-		err := errors.New("request body password for creating user is missing")
-		responses.ERROR(w, http.StatusBadRequest, err)
-		return
-	}
-
 	user.Prepare()
 	err = user.Validate("")
 	if err != nil {
@@ -63,7 +47,7 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, responses.JSONResponse{
 		Status:  http.StatusCreated,
 		Message: "User successfully created",
-		Data:    userCreated,
+		Data:    nil,
 	})
 }
 
