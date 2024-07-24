@@ -6,8 +6,14 @@ import (
 	"net/http"
 )
 
-func JSON(w http.ResponseWriter, statusCode int, data interface{}) {
-	w.WriteHeader(statusCode)
+type JSONResponse struct {
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}
+
+func JSON(w http.ResponseWriter, data JSONResponse) {
+	w.WriteHeader(data.Status)
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
 		fmt.Fprintf(w, "%s", err.Error())
@@ -15,13 +21,13 @@ func JSON(w http.ResponseWriter, statusCode int, data interface{}) {
 }
 
 func ERROR(w http.ResponseWriter, statusCode int, err error) {
-	if err != nil {
-		JSON(w, statusCode, struct {
-			Error string `json:"error"`
-		}{
-			Error: err.Error(),
-		})
-		return
+	data := JSONResponse{
+		Status:  statusCode,
+		Message: "",
+		Data:    nil,
 	}
-	JSON(w, http.StatusBadRequest, nil)
+	if err != nil {
+		data.Message = err.Error()
+	}
+	JSON(w, data)
 }
