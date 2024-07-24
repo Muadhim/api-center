@@ -28,6 +28,22 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if user.Name == "" {
+		err := errors.New("request body name for creating user is missing")
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	if user.Email == "" {
+		err := errors.New("request body email for creating user is missing")
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	if user.Password == "" {
+		err := errors.New("request body password for creating user is missing")
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+
 	user.Prepare()
 	err = user.Validate("")
 	if err != nil {
@@ -44,7 +60,11 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, userCreated.ID))
-	responses.JSON(w, http.StatusCreated, userCreated)
+	responses.JSON(w, responses.JSONResponse{
+		Status:  http.StatusCreated,
+		Message: "User successfully created",
+		Data:    userCreated,
+	})
 }
 
 func (server *Server) GetUsers(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +75,11 @@ func (server *Server) GetUsers(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
-	responses.JSON(w, http.StatusOK, users)
+	responses.JSON(w, responses.JSONResponse{
+		Status:  http.StatusOK,
+		Message: "Success Get All Users",
+		Data:    users,
+	})
 }
 
 func (server *Server) GetUser(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +96,11 @@ func (server *Server) GetUser(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
-	responses.JSON(w, http.StatusOK, userGotten)
+	responses.JSON(w, responses.JSONResponse{
+		Status:  http.StatusOK,
+		Message: "Success Get User",
+		Data:    userGotten,
+	})
 }
 
 func (server *Server) UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -120,7 +148,11 @@ func (server *Server) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, formattedError)
 		return
 	}
-	responses.JSON(w, http.StatusOK, updatedUser)
+	responses.JSON(w, responses.JSONResponse{
+		Status:  http.StatusOK,
+		Message: "Success Update User",
+		Data:    updatedUser,
+	})
 }
 
 func (server *Server) DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -150,5 +182,9 @@ func (server *Server) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Entity", fmt.Sprintf("%d", uid))
-	responses.JSON(w, http.StatusNoContent, "")
+	responses.JSON(w, responses.JSONResponse{
+		Status:  http.StatusNoContent,
+		Message: "Success Delete User",
+		Data:    nil,
+	})
 }
