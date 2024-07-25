@@ -1,13 +1,16 @@
 package controllers
 
-import "api-center/api/middlewares"
+import (
+	"api-center/api/middlewares"
+	"api-center/configs"
+)
 
-func (s *Server) initializeRoutes() {
+func (s *Server) initializeRoutes(c *configs.Config) {
 	// Home Route
 	s.Router.HandleFunc("/", s.Home).Methods("GET")
 
 	// Login Route
-	s.Router.HandleFunc("/login", middlewares.SetMiddlewareJSON(s.Login)).Methods("POST")
+	s.Router.HandleFunc(c.ApiVersion+"/login", middlewares.SetMiddlewareJSON(s.Login)).Methods("POST")
 
 	// // Users Route
 	s.Router.HandleFunc("/users", middlewares.SetMiddlewareJSON(s.CreateUser)).Methods("POST")

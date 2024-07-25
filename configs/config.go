@@ -15,6 +15,7 @@ type Config struct {
 	ServerPort      string
 	SetMaxIdleConns string
 	SetMaxOpenConns string
+	ApiVersion      string
 }
 
 func LoadConfig() *Config {
@@ -29,6 +30,7 @@ func LoadConfig() *Config {
 		"SERVER_PORT":        &config.ServerPort,
 		"SET_MAX_IDLE_CONNS": &config.SetMaxIdleConns,
 		"SET_MAX_OPEN_CONNS": &config.SetMaxOpenConns,
+		"API_VERSION":        &config.ApiVersion,
 	}
 
 	for key, ptr := range envVars {
