@@ -28,7 +28,7 @@ func (server *Server) Initialize(config *configs.Config) {
 	// }
 
 	server.Router = mux.NewRouter()
-	server.initializeRoutes()
+	server.initializeRoutes(config)
 	server.InitializeStaticAsset()
 }
 
