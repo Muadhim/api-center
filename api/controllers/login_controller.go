@@ -33,31 +33,43 @@ func (server *Server) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := server.SignIn(user.Email, user.Password)
+	token, user, err := server.SignIn(user.Email, user.Password)
 	if err != nil {
 		formattedError := formaterror.FormatError(err.Error())
 		responses.ERROR(w, http.StatusUnprocessableEntity, formattedError)
 		return
 	}
+
 	responses.JSON(w, responses.JSONResponse{
 		Status:  http.StatusOK,
 		Message: "Successfully logged in",
-		Data:    token,
+		Data: struct {
+			Id          uint   `json:"id"`
+			Name        string `json:"name"`
+			Email       string `json:"email"`
+			AccessToken string `json:"access_token"`
+		}{
+			Id:          user.ID,
+			Name:        user.Name,
+			Email:       user.Email,
+			AccessToken: token,
+		},
 	})
 }
 
-func (server *Server) SignIn(email, password string) (string, error) {
+func (server *Server) SignIn(email, password string) (string, models.User, error) {
 	var err error
 	user := models.User{}
 	err = server.DB.Debug().Model(models.User{}).Where("email = ?", email).Take(&user).Error
 	if err != nil {
-		return "", err
+		return "", user, err
 	}
 
 	err = models.VerifyPassword(user.Password, password)
 	if err != nil || err == bcrypt.ErrMismatchedHashAndPassword {
-		return "", err
+		return "", user, err
 	}
 
-	return auth.CreateToken(uint32(user.ID))
+	token, err := auth.CreateToken(uint32(user.ID))
+	return token, user, err
 }
