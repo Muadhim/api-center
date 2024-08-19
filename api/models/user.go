@@ -127,6 +127,13 @@ func (u *User) FindUserByID(db *gorm.DB, uid uint32) (*User, error) {
 	}
 	return u, err
 }
+func (u *User) FindUserByEmail(db *gorm.DB, email string) (*User, error) {
+	err := db.Debug().Model(User{}).Where("email = ?", email).Take(&u).Error
+	if err != nil {
+		return &User{}, err
+	}
+	return u, err
+}
 
 func (u *User) UpdateAUser(db *gorm.DB, uid uint32) (*User, error) {
 	// To hash the password
@@ -138,7 +145,7 @@ func (u *User) UpdateAUser(db *gorm.DB, uid uint32) (*User, error) {
 	db = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&User{}).UpdateColumns(
 		map[string]interface{}{
 			"password":  u.Password,
-			"Name":      u.Name,
+			"name":      u.Name,
 			"email":     u.Email,
 			"update_at": time.Now(),
 		},

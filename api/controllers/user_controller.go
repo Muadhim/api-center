@@ -13,6 +13,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 )
 
 func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -32,6 +33,14 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 	err = user.Validate("")
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+	// check if user is exist by email
+	userExist, err := user.FindUserByEmail(server.DB, user.Email)
+
+	if userExist != nil && err != gorm.ErrRecordNotFound {
+		responses.ERROR(w, http.StatusConflict,
+			fmt.Errorf("user with email %s already exist", user.Email))
 		return
 	}
 
