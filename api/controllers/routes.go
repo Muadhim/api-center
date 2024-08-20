@@ -18,6 +18,8 @@ func (s *Server) initializeRoutes(c *configs.Config) {
 	s.Router.HandleFunc(c.ApiVersion+"/users/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.UpdateUser))).Methods("PUT")
 	s.Router.HandleFunc(c.ApiVersion+"/users/{id}", middlewares.SetMiddlewareAuthentication(s.DeleteUser)).Methods("DELETE")
 
+	s.Router.HandleFunc(c.ApiVersion+"/project", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.CreateProject))).Methods("POST")
+
 	// Catch-all OPTIONS route for CORS
 	s.Router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodOptions {
