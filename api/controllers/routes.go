@@ -26,6 +26,7 @@ func (s *Server) initializeRoutes(c *configs.Config) {
 	// projects
 	s.Router.HandleFunc(c.ApiVersion+"/project", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.CreateProject))).Methods("POST")
 	s.Router.HandleFunc(c.ApiVersion+"/project/{id}/members", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.UpdateProjectMembers))).Methods("PUT")
+	s.Router.HandleFunc(c.ApiVersion+"/project/{id}/members", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.DeleteProjectMembers))).Methods("DELETE")
 	s.Router.HandleFunc(c.ApiVersion+"/project/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.DeleteProject))).Methods("DELETE")
 	s.Router.HandleFunc(c.ApiVersion+"/projects", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.GetProjects))).Methods("GET")
 	s.Router.HandleFunc(c.ApiVersion+"/project/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.GetProjectByID))).Methods("GET")

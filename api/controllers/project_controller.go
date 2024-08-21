@@ -132,6 +132,66 @@ func (server *Server) UpdateProjectMembers(w http.ResponseWriter, r *http.Reques
 	})
 }
 
+func (server *Server) DeleteProjectMembers(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	pid, err := strconv.ParseUint(vars["id"], 10, 32)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	project := models.Project{}
+	if err = json.Unmarshal(body, &project); err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	// Validate member IDs
+	if err = project.Validate("update_member"); err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	// Find the project and preload its members
+	if err = server.DB.Debug().Preload("Members").Where("id = ?", pid).Take(&project).Error; err != nil {
+		responses.ERROR(w, http.StatusNotFound, errors.New("project not found"))
+		return
+	}
+
+	// Extract the token ID from the request
+	tokenID, err := auth.ExtractTokenID(r)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	// Check if the authenticated user is the author of the project
+	if tokenID != uint32(project.AuthorID) {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("you are not authorized to delete members from this project"))
+		return
+	}
+
+	// Remove members from the project
+	for _, memberID := range project.MemberIDs {
+		err = server.DB.Debug().Model(&project).Association("Members").Delete(&models.User{ID: memberID})
+		if err != nil {
+			responses.ERROR(w, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	responses.JSON(w, responses.JSONResponse{
+		Status:  http.StatusOK,
+		Message: "Project members deleted successfully",
+	})
+}
+
 // DeleteProject deletes a project by its ID
 func (server *Server) DeleteProject(w http.ResponseWriter, r *http.Request) {
 	// Get the project ID from the URL parameters
