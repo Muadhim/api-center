@@ -68,7 +68,7 @@ func (p *Project) DeleteProject(db *gorm.DB, pid uint32) (int64, error) {
 	return db.RowsAffected, nil
 }
 
-func (p *Project) UpdatteProjectMembers(db *gorm.DB) (*Project, error) {
+func (p *Project) UpdateProjectMembers(db *gorm.DB) (*Project, error) {
 	// Fetch the users that correspond to the provided member IDs
 	if len(p.MemberIDs) > 0 {
 		user := User{}

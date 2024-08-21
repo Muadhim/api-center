@@ -117,7 +117,7 @@ func (server *Server) UpdateProjectMembers(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	projectMemberUpdated, err := project.UpdatteProjectMembers(server.DB)
+	projectMemberUpdated, err := project.UpdateProjectMembers(server.DB)
 	if err != nil {
 		formattedError := formaterror.FormatError(err.Error())
 		responses.ERROR(w, http.StatusInternalServerError, formattedError)
