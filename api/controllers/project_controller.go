@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"api-center/api/auth"
+	"api-center/api/helper"
 	"api-center/api/models"
 	"api-center/api/responses"
 	"api-center/utils/formaterror"
@@ -11,6 +12,8 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 func (server *Server) CreateProject(w http.ResponseWriter, r *http.Request) {
@@ -35,13 +38,13 @@ func (server *Server) CreateProject(w http.ResponseWriter, r *http.Request) {
 
 	tokenID, err := auth.ExtractTokenID(r)
 	if err != nil {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("unauthorized"))
 		return
 	}
 
 	uid, err := strconv.ParseUint(fmt.Sprint(tokenID), 10, 32)
 	if err != nil {
-		responses.ERROR(w, http.StatusBadRequest, errors.New("Error parsing token ID"))
+		responses.ERROR(w, http.StatusBadRequest, errors.New("error parsing token ID"))
 		return
 	}
 
@@ -51,6 +54,7 @@ func (server *Server) CreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 	project.AuthorID = uint(uid)
 
+	// Save the project and associate members
 	projectCreated, err := project.SaveProject(server.DB)
 	if err != nil {
 		formattedError := formaterror.FormatError(err.Error())
@@ -58,10 +62,199 @@ func (server *Server) CreateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	projectResponse := helper.TransformProject(*projectCreated)
+
 	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, projectCreated.ID))
 	responses.JSON(w, responses.JSONResponse{
 		Status:  http.StatusCreated,
 		Message: "Project successfully created",
-		Data:    projectCreated,
+		Data:    projectResponse,
+	})
+}
+
+func (server *Server) UpdateProjectMembers(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	pid, err := strconv.ParseUint(vars["id"], 10, 32)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+
+	project := models.Project{}
+	err = project.Validate("update_member")
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	err = server.DB.Debug().Preload("Members").Where("id = ?", pid).Take(&project).Error
+	if err != nil {
+		responses.ERROR(w, http.StatusNotFound, errors.New("project not found"))
+		return
+	}
+
+	// Extract the token ID from the request
+	tokenID, err := auth.ExtractTokenID(r)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
+	// Check if the authenticated user is the author of the project
+	if tokenID != uint32(project.AuthorID) {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("you are not authorized to delete this project"))
+		return
+	}
+
+	// Read the new members from the request body
+	var newMembers []uint
+	err = json.NewDecoder(r.Body).Decode(&newMembers)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	// Fetch the users that correspond to the new members
+	user := models.User{}
+	users, err := user.FindUsersByIDs(server.DB, newMembers)
+	if err != nil {
+		formattedError := formaterror.FormatError(err.Error())
+		responses.ERROR(w, http.StatusInternalServerError, formattedError)
+		return
+	}
+
+	// Update the members of the project
+	project.Members = users
+	err = server.DB.Debug().Save(&project).Error
+	if err != nil {
+		formattedError := formaterror.FormatError(err.Error())
+		responses.ERROR(w, http.StatusInternalServerError, formattedError)
+		return
+	}
+
+	responses.JSON(w, responses.JSONResponse{
+		Status:  http.StatusOK,
+		Message: "Project members updated successfully",
+		Data:    project,
+	})
+}
+
+// DeleteProject deletes a project by its ID
+func (server *Server) DeleteProject(w http.ResponseWriter, r *http.Request) {
+	// Get the project ID from the URL parameters
+	vars := mux.Vars(r)
+	pid, err := strconv.ParseUint(vars["id"], 10, 32)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, errors.New("invalid project ID"))
+		return
+	}
+
+	// Extract the token ID from the request
+	tokenID, err := auth.ExtractTokenID(r)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
+	// Check if the token ID matches the author of the project
+	project := models.Project{}
+	err = server.DB.Debug().Model(models.Project{}).Where("id = ?", pid).Take(&project).Error
+	if err != nil {
+		responses.ERROR(w, http.StatusNotFound, errors.New("project not found"))
+		return
+	}
+
+	err = project.Validate("delete")
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	// Check if the authenticated user is the author of the project
+	if tokenID != uint32(project.AuthorID) {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("you are not authorized to delete this project"))
+		return
+	}
+
+	// Delete the project
+	_, err = project.DeleteProject(server.DB, uint32(pid))
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(w, responses.JSONResponse{
+		Status:  http.StatusOK,
+		Message: "Project successfully deleted",
+	})
+}
+
+// GetProjects retrieves all projects where the user is the author or a member
+func (server *Server) GetProjects(w http.ResponseWriter, r *http.Request) {
+	var projects []models.Project
+
+	// Extract the token ID from the request
+	tokenID, err := auth.ExtractTokenID(r)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	// Query to fetch projects where the user is either the author or a member
+	err = server.DB.Debug().Model(&models.Project{}).
+		Preload("Members").
+		Where("author_id = ? OR id IN (SELECT project_id FROM project_users WHERE user_id = ?)", tokenID, tokenID).
+		Find(&projects).Error
+
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	projectsRespnse := helper.TransformProjects(projects)
+
+	responses.JSON(w, responses.JSONResponse{
+		Status:  http.StatusOK,
+		Message: "Projects retrieved successfully",
+		Data:    projectsRespnse,
+	})
+}
+
+// GetProjectByID retrieves a project by its ID if the user is the author or a member
+func (server *Server) GetProjectByID(w http.ResponseWriter, r *http.Request) {
+	// Extract the project ID from the URL parameters
+	vars := mux.Vars(r)
+	pid, err := strconv.ParseUint(vars["id"], 10, 32)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, errors.New("invalid project ID"))
+		return
+	}
+
+	// Extract the token ID from the request
+	tokenID, err := auth.ExtractTokenID(r)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	var project models.Project
+
+	// Query to fetch the project by ID with validation
+	err = server.DB.Debug().Model(&models.Project{}).
+		Preload("Members").
+		Where("id = ? AND (author_id = ? OR id IN (SELECT project_id FROM project_users WHERE user_id = ?))", pid, tokenID, tokenID).
+		First(&project).Error
+
+	if err != nil {
+		responses.ERROR(w, http.StatusNotFound, errors.New("project not found or you are not authorized to view it"))
+		return
+	}
+
+	projectResponse := helper.TransformProject(project)
+
+	responses.JSON(w, responses.JSONResponse{
+		Status:  http.StatusOK,
+		Message: "Project retrieved successfully",
+		Data:    projectResponse,
 	})
 }
