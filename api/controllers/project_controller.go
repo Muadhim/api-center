@@ -62,13 +62,11 @@ func (server *Server) CreateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	projectResponse := helper.TransformProject(*projectCreated)
-
 	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, projectCreated.ID))
 	responses.JSON(w, responses.JSONResponse{
 		Status:  http.StatusCreated,
 		Message: "Project successfully created",
-		Data:    projectResponse,
+		Data:    nil,
 	})
 }
 
@@ -80,7 +78,20 @@ func (server *Server) UpdateProjectMembers(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
 	project := models.Project{}
+	err = json.Unmarshal(body, &project)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	// Validate the request
 	err = project.Validate("update_member")
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
@@ -102,40 +113,22 @@ func (server *Server) UpdateProjectMembers(w http.ResponseWriter, r *http.Reques
 
 	// Check if the authenticated user is the author of the project
 	if tokenID != uint32(project.AuthorID) {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New("you are not authorized to delete this project"))
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("you are not authorized to update this members of project"))
 		return
 	}
 
-	// Read the new members from the request body
-	var newMembers []uint
-	err = json.NewDecoder(r.Body).Decode(&newMembers)
-	if err != nil {
-		responses.ERROR(w, http.StatusUnprocessableEntity, err)
-		return
-	}
-
-	// Fetch the users that correspond to the new members
-	user := models.User{}
-	users, err := user.FindUsersByIDs(server.DB, newMembers)
+	projectMemberUpdated, err := project.UpdatteProjectMembers(server.DB)
 	if err != nil {
 		formattedError := formaterror.FormatError(err.Error())
 		responses.ERROR(w, http.StatusInternalServerError, formattedError)
 		return
 	}
 
-	// Update the members of the project
-	project.Members = users
-	err = server.DB.Debug().Save(&project).Error
-	if err != nil {
-		formattedError := formaterror.FormatError(err.Error())
-		responses.ERROR(w, http.StatusInternalServerError, formattedError)
-		return
-	}
-
+	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, projectMemberUpdated.ID))
 	responses.JSON(w, responses.JSONResponse{
 		Status:  http.StatusOK,
 		Message: "Project members updated successfully",
-		Data:    project,
+		Data:    nil,
 	})
 }
 

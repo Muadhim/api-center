@@ -23,33 +23,17 @@ func (p *Project) Validate(action string) error {
 
 	switch action {
 	case "create":
-		// Ensure Name is provided
 		if p.Name == "" {
 			return errors.New("project name is required")
 		}
-		// Optionally validate Members (if necessary)
-
-	case "create_project":
-		// Ensure Name is provided
-		if p.Name == "" {
-			return errors.New("project name is required")
-		}
-		return nil
-
 	case "update_member":
-		// Validate that Members are provided for update
 		if len(p.MemberIDs) == 0 {
 			return errors.New("at least one member must be provided for update")
 		}
-		return nil
-
 	case "delete":
-		// Validate that Project ID is provided for delete
 		if p.ID == 0 {
 			return errors.New("project ID is required for deletion")
 		}
-		return nil
-
 	default:
 		return errors.New("invalid action specified")
 	}
@@ -82,4 +66,23 @@ func (p *Project) DeleteProject(db *gorm.DB, pid uint32) (int64, error) {
 		return 0, db.Error
 	}
 	return db.RowsAffected, nil
+}
+
+func (p *Project) UpdatteProjectMembers(db *gorm.DB) (*Project, error) {
+	// Fetch the users that correspond to the provided member IDs
+	if len(p.MemberIDs) > 0 {
+		user := User{}
+		users, err := user.FindUsersByIDs(db, p.MemberIDs)
+		if err != nil {
+			return &Project{}, err
+		}
+		p.Members = users
+	}
+
+	err := db.Debug().Save(&p).Error
+	if err != nil {
+		return &Project{}, err
+	}
+
+	return p, nil
 }
