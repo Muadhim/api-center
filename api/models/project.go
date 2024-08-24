@@ -2,9 +2,13 @@ package models
 
 import (
 	"errors"
+	"fmt"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
@@ -13,7 +17,8 @@ type Project struct {
 	Name      string    `gorm:"type:varchar(255);not null" json:"name"`
 	AuthorID  uint      `gorm:"index;not null" json:"author_id"`
 	Members   []User    `gorm:"many2many:project_users" json:"members,omitempty"`
-	MemberIDs []uint    `gorm:"-" json:"member_ids"` // Use this field to capture the member IDs from the request
+	MemberIDs []uint    `gorm:"-" json:"member_ids"` // Use this field to capture the member IDs from the request\
+	GroupID   uint      `gorm:"index" json:"group_id"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }
@@ -85,4 +90,57 @@ func (p *Project) UpdateProjectMembers(db *gorm.DB) (*Project, error) {
 	}
 
 	return p, nil
+}
+
+func GenProjectToken(pid uint32) (string, error) {
+	claims := jwt.MapClaims{}
+	claims["project_id"] = pid
+	claims["exp"] = time.Now().Add(time.Minute * 30).Unix()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return token.SignedString([]byte(os.Getenv("API_SECRET")))
+}
+
+func (p *Project) InviteProjectByToken(t string, uid uint, db *gorm.DB) (*Project, error) {
+	// Parse the token
+	token, err := jwt.Parse(t, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
+		return []byte(os.Getenv("API_SECRET")), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate the token and extract claims
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		// Parse project_id from token
+		pid, err := strconv.ParseUint(fmt.Sprintf("%.0f", claims["project_id"]), 10, 32)
+		if err != nil {
+			return nil, fmt.Errorf("invalid project_id in token: %v", err)
+		}
+
+		// Set project ID
+		p.ID = uint(pid)
+
+		// Add the user to MemberIDs
+		p.MemberIDs = append(p.MemberIDs, uid)
+
+		// Validate update action
+		if err := p.Validate("update_member"); err != nil {
+			return nil, err
+		}
+
+		// Update project members in the database
+		updatedProject, err := p.UpdateProjectMembers(db)
+		if err != nil {
+			return nil, err
+		}
+
+		return updatedProject, nil
+	}
+
+	return nil, fmt.Errorf("invalid token")
 }
