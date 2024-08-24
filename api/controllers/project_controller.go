@@ -313,20 +313,14 @@ func (server *Server) GetProjectByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) GenerateInviteToken(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Reached handler")
-
-	// Retrieve project_id from query parameters
-	pid := r.URL.Query().Get("project_id")
-	fmt.Println("project id: ", pid) // For debugging
-
-	// Check if project_id is empty
-	if pid == "" {
-		responses.ERROR(w, http.StatusBadRequest, errors.New("project ID is required"))
+	vars := mux.Vars(r)
+	pid, err := strconv.ParseUint(vars["id"], 10, 32)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
 
 	// Attempt to convert project_id to uint32
-	pidUint, err := strconv.ParseUint(pid, 10, 32)
 	if err != nil {
 		fmt.Println("Error parsing project ID:", err) // Debugging
 		responses.ERROR(w, http.StatusBadRequest, errors.New("invalid project ID"))
@@ -334,7 +328,7 @@ func (server *Server) GenerateInviteToken(w http.ResponseWriter, r *http.Request
 	}
 
 	// Generate the token using the project ID
-	token, err := models.GenProjectToken(uint32(pidUint))
+	token, err := models.GenProjectToken(uint32(pid))
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
@@ -349,7 +343,6 @@ func (server *Server) GenerateInviteToken(w http.ResponseWriter, r *http.Request
 }
 
 func (server *Server) ValidateInvitationToken(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("join group handler")
 	type tokenRequest struct {
 		Token string `json:"token"`
 	}
@@ -363,16 +356,18 @@ func (server *Server) ValidateInvitationToken(w http.ResponseWriter, r *http.Req
 	tokenValue := req.Token
 
 	uid, err := auth.ExtractTokenID(r)
-	fmt.Println("uid: ", uid)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("unauthorized"))
 		return
 	}
-	fmt.Println("user id: ", uid)
 
 	project := models.Project{}
 	// invite user to project
 	_, err = project.InviteProjectByToken(tokenValue, uint(uid), server.DB)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
 
 	responses.JSON(w, responses.JSONResponse{
 		Status:  http.StatusOK,
