@@ -30,7 +30,7 @@ func (s *Server) initializeRoutes(c *configs.Config) {
 	s.Router.HandleFunc(c.ApiVersion+"/project/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.DeleteProject))).Methods("DELETE")
 	s.Router.HandleFunc(c.ApiVersion+"/projects", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.GetProjects))).Methods("GET")
 	s.Router.HandleFunc(c.ApiVersion+"/project/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.GetProjectByID))).Methods("GET")
-	s.Router.HandleFunc(c.ApiVersion+"/invite-project-link", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.GenerateInviteToken))).Methods("GET")
+	s.Router.HandleFunc(c.ApiVersion+"/project/{id}/invite", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.GenerateInviteToken))).Methods("GET")
 	s.Router.HandleFunc(c.ApiVersion+"/join-project", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.ValidateInvitationToken))).Methods("POST")
 
 	// Catch-all OPTIONS route for CORS
