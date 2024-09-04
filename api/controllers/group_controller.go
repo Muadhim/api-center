@@ -22,11 +22,7 @@ func (s *Server) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	group := models.Group{}
-	err = json.Unmarshal([]byte(req.Name), &group)
-	if err != nil {
-		responses.ERROR(w, http.StatusUnprocessableEntity, err)
-		return
-	}
+	group.Name = req.Name
 
 	tokenID, err := auth.ExtractTokenID(r)
 	if err != nil {
