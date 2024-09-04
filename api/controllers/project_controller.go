@@ -41,18 +41,7 @@ func (server *Server) CreateProject(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("unauthorized"))
 		return
 	}
-
-	uid, err := strconv.ParseUint(fmt.Sprint(tokenID), 10, 32)
-	if err != nil {
-		responses.ERROR(w, http.StatusBadRequest, errors.New("error parsing token ID"))
-		return
-	}
-
-	if tokenID != uint32(uid) {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-		return
-	}
-	project.AuthorID = uint(uid)
+	project.AuthorID = uint(tokenID)
 
 	// Save the project and associate members
 	projectCreated, err := project.SaveProject(server.DB)
@@ -112,7 +101,7 @@ func (server *Server) UpdateProjectMembers(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Check if the authenticated user is the author of the project
-	if tokenID != uint32(project.AuthorID) {
+	if tokenID != project.AuthorID {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("you are not authorized to update this members of project"))
 		return
 	}
@@ -172,7 +161,7 @@ func (server *Server) DeleteProjectMembers(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Check if the authenticated user is the author of the project
-	if tokenID != uint32(project.AuthorID) {
+	if tokenID != project.AuthorID {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("you are not authorized to delete members from this project"))
 		return
 	}
@@ -224,7 +213,7 @@ func (server *Server) DeleteProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the authenticated user is the author of the project
-	if tokenID != uint32(project.AuthorID) {
+	if tokenID != project.AuthorID {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("you are not authorized to delete this project"))
 		return
 	}
@@ -257,6 +246,7 @@ func (server *Server) GetProjects(w http.ResponseWriter, r *http.Request) {
 	err = server.DB.Debug().Model(&models.Project{}).
 		Preload("Members").
 		Where("author_id = ? OR id IN (SELECT project_id FROM project_users WHERE user_id = ?)", tokenID, tokenID).
+		Order("created_at DESC").
 		Find(&projects).Error
 
 	if err != nil {
