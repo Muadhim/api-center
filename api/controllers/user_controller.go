@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"api-center/api/auth"
+	"api-center/api/helper"
 	"api-center/api/models"
 	"api-center/api/responses"
 	"api-center/utils/formaterror"
@@ -68,10 +69,12 @@ func (server *Server) GetUsers(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
+
+	usersResponse := helper.TransformUsers(*users)
 	responses.JSON(w, responses.JSONResponse{
 		Status:  http.StatusOK,
 		Message: "Success Get All Users",
-		Data:    users,
+		Data:    usersResponse,
 	})
 }
 
@@ -89,10 +92,12 @@ func (server *Server) GetUser(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
+
+	userResponse := helper.TransformUser(*userGotten)
 	responses.JSON(w, responses.JSONResponse{
 		Status:  http.StatusOK,
 		Message: "Success Get User",
-		Data:    userGotten,
+		Data:    userResponse,
 	})
 }
 
@@ -123,7 +128,7 @@ func (server *Server) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if tokenID != uint32(uid) {
+	if tokenID != uint(uid) {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
 		return
 	}
@@ -141,10 +146,13 @@ func (server *Server) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, formattedError)
 		return
 	}
+
+	userResponse := helper.TransformUser(*updatedUser)
+
 	responses.JSON(w, responses.JSONResponse{
 		Status:  http.StatusOK,
 		Message: "Success Update User",
-		Data:    updatedUser,
+		Data:    userResponse,
 	})
 }
 
@@ -163,7 +171,7 @@ func (server *Server) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if tokenID != 0 && tokenID != uint32(uid) {
+	if tokenID != 0 && tokenID != uint(uid) {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
 		return
 	}
