@@ -36,7 +36,6 @@ func (s *Server) initializeRoutes(c *configs.Config) {
 	// groups
 	s.Router.HandleFunc(c.ApiVersion+"/group", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.CreateGroup))).Methods("POST")
 	s.Router.HandleFunc(c.ApiVersion+"/groups", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.GetGroups))).Methods("GET")
-	s.Router.HandleFunc(c.ApiVersion+"/join-project", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.ValidateInvitationToken))).Methods("POST")
 
 	// Catch-all OPTIONS route for CORS
 	s.Router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
