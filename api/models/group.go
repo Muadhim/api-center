@@ -42,16 +42,6 @@ func (g *Group) Validate(action string) error {
 
 // SaveGroup creates a new group and associates members if provided
 func (g *Group) SaveGroup(db *gorm.DB) (*Group, error) {
-	// Fetch the users that correspond to the provided member IDs
-	if len(g.MemberIDs) > 0 {
-		user := User{}
-		users, err := user.FindUsersByIDs(db, g.MemberIDs)
-		if err != nil {
-			return &Group{}, err
-		}
-		g.Members = users
-	}
-
 	// Create the group with the associated members
 	err := db.Debug().Create(&g).Error
 	if err != nil {
