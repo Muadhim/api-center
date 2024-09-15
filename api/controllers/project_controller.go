@@ -306,13 +306,6 @@ func (server *Server) GenerateInviteToken(w http.ResponseWriter, r *http.Request
 	vars := mux.Vars(r)
 	pid, err := strconv.ParseUint(vars["id"], 10, 32)
 	if err != nil {
-		responses.ERROR(w, http.StatusBadRequest, err)
-		return
-	}
-
-	// Attempt to convert project_id to uint32
-	if err != nil {
-		fmt.Println("Error parsing project ID:", err) // Debugging
 		responses.ERROR(w, http.StatusBadRequest, errors.New("invalid project ID"))
 		return
 	}

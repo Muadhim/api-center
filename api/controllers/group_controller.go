@@ -6,8 +6,12 @@ import (
 	"api-center/api/models"
 	"api-center/api/responses"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 func (s *Server) CreateGroup(w http.ResponseWriter, r *http.Request) {
@@ -71,5 +75,87 @@ func (s *Server) GetGroups(w http.ResponseWriter, r *http.Request) {
 		Status:  http.StatusOK,
 		Message: "OK",
 		Data:    gropsResponse,
+	})
+}
+
+func (s *Server) DeleteGroup(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	pid, err := strconv.ParseInt(vars["id"], 10, 32)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+
+	tokenID, err := auth.ExtractTokenID(r)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
+		return
+	}
+
+	group := models.Group{}
+	err = s.DB.Debug().Model(&models.Group{}).Where("id = ? AND author_id = ?", pid, tokenID).Take(&group).Error
+	if err != nil {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
+		return
+	}
+	_, err = group.DeleteGroup(s.DB, uint(pid))
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	responses.JSON(w, responses.JSONResponse{
+		Status:  http.StatusOK,
+		Message: "Group successfully deleted",
+	})
+}
+
+func (s Server) GenInviteGroupToken(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	pid, err := strconv.ParseInt(vars["id"], 10, 32)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	token, err := models.GenGroupToken(uint32(pid))
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	responses.JSON(w, responses.JSONResponse{
+		Status:  http.StatusOK,
+		Message: "Token generated successfully",
+		Data:    token,
+	})
+}
+func (s *Server) ValidateInvitationGroupToken(w http.ResponseWriter, r *http.Request) {
+	type tokenRequest struct {
+		Token string `json:"token"`
+	}
+
+	var req tokenRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	tokenValue := req.Token
+	uid, err := auth.ExtractTokenID(r)
+
+	if err != nil {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
+	group := models.Group{}
+	_, err = group.InviteGroupByToken(tokenValue, uint(uid), s.DB)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	responses.JSON(w, responses.JSONResponse{
+		Status:  http.StatusOK,
+		Message: "Group successfully joined",
 	})
 }
