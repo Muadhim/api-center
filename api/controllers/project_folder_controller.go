@@ -34,11 +34,12 @@ func (s Server) CreateProjectFolder(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-	_, err = auth.ExtractTokenID(r)
+	tokenID, err := auth.ExtractTokenID(r)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("unauthorized"))
 		return
 	}
+	projectFolder.AuthorID = uint(tokenID)
 
 	projectFolderCreated, err := projectFolder.SaveProjectFolder(s.DB)
 	if err != nil {
