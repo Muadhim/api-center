@@ -39,6 +39,11 @@ func (s *Server) initializeRoutes(c *configs.Config) {
 	s.Router.HandleFunc(c.ApiVersion+"/group/{id}/invite", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.GenInviteGroupToken))).Methods("GET")
 	s.Router.HandleFunc(c.ApiVersion+"/group/join", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.ValidateInvitationGroupToken))).Methods("POST")
 
+	// folders
+	s.Router.HandleFunc(c.ApiVersion+"/project-folder", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.CreateProjectFolder))).Methods("POST")
+	s.Router.HandleFunc(c.ApiVersion+"/project-folder/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.DeleteProjectFolder))).Methods("DELETE")
+	s.Router.HandleFunc(c.ApiVersion+"/project-folder", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.UpdateProjectFolder))).Methods("PUT")
+
 	// Catch-all OPTIONS route for CORS
 	s.Router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodOptions {
