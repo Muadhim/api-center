@@ -76,9 +76,8 @@ func (s *Server) DeleteProjectApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Entity", fmt.Sprintf("%d", id))
 	responses.JSON(w, responses.JSONResponse{
-		Status:  http.StatusNoContent,
+		Status:  http.StatusOK,
 		Message: "Project api successfully deleted",
 	})
 }
