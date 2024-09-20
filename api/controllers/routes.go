@@ -49,6 +49,9 @@ func (s *Server) initializeRoutes(c *configs.Config) {
 	s.Router.HandleFunc(c.ApiVersion+"/project-api/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.DeleteProjectApi))).Methods("DELETE")
 	s.Router.HandleFunc(c.ApiVersion+"/project-api", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.UpdateProjectApi))).Methods("PUT")
 
+	// project tree
+	s.Router.HandleFunc(c.ApiVersion+"/project-tree/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.GetProjectTree))).Methods("GET")
+
 	// Catch-all OPTIONS route for CORS
 	s.Router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodOptions {
