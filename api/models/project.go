@@ -144,3 +144,12 @@ func (p *Project) InviteProjectByToken(t string, uid uint, db *gorm.DB) (*Projec
 
 	return nil, fmt.Errorf("invalid token")
 }
+
+// FindProjectByID retrieves a project by its ID if the user is the author or a member
+func (p *Project) FindProjectByID(db *gorm.DB, pid uint, uid uint) ( error) {
+	err := db.Debug().Preload("Members").Where("id = ? AND (author_id = ? OR id IN (SELECT project_id FROM project_users WHERE user_id = ?))", pid, uid, uid).First(&p).Error
+	if err != nil {
+		return err
+	}
+	return  nil
+}
