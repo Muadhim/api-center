@@ -13,6 +13,7 @@ type ProjectApi struct {
 	Name      string    `gorm:"type:varchar(255);not null" json:"name"`
 	FolderID  uint      `gorm:"index;not null;constraint:OnDelete:CASCADE" json:"folder_id"`
 	AuthorID  uint      `gorm:"index;not null;constraint:OnDelete:CASCADE" json:"author_id"`
+	UpdateBy  uint      `gorm:"index;default:null" json:"update_by"`
 	Method    string    `gorm:"type:varchar(255);not null" json:"method"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
@@ -62,6 +63,7 @@ func (pa *ProjectApi) UpdateProjectApi(db *gorm.DB) (*ProjectApi, error) {
 			"name":       pa.Name,
 			"folder_id":  pa.FolderID,
 			"method":     pa.Method,
+			"update_by":  pa.UpdateBy,
 			"updated_at": time.Now()}).
 		Error
 	if err != nil {

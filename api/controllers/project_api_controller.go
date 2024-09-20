@@ -101,11 +101,13 @@ func (s *Server) UpdateProjectApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = auth.ExtractTokenID(r)
+	uid, err := auth.ExtractTokenID(r)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("unauthorized"))
 		return
 	}
+
+	projectApi.UpdateBy = uint(uid)
 
 	_, err = projectApi.UpdateProjectApi(s.DB)
 	if err != nil {
