@@ -44,6 +44,12 @@ func (s *Server) GetProjectTree(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, responses.JSONResponse{
 		Status:  http.StatusOK,
 		Message: "Project tree successfully retrieved",
-		Data:    tree,
+		Data: struct {
+			ProjectName string                `json:"project_name"`
+			Tree        []*models.ProjectTree `json:"preject_tree"`
+		}{
+			ProjectName: project.Name,
+			Tree:        tree,
+		},
 	})
 }
