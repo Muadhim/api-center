@@ -28,15 +28,18 @@ func (pa *ProjectApi) Validate(action string) error {
 		if pa.FolderID == 0 {
 			return errors.New("project folder ID is required")
 		}
-		if pa.AuthorID == 0 {
-			return errors.New("project author ID is required")
-		}
 		if pa.Method == "" {
 			return errors.New("project api method is required")
 		}
 	case "update":
 		if pa.ID == 0 {
 			return errors.New("project api ID is required for update")
+		}
+		if pa.FolderID == 0 {
+			return errors.New("project folder ID is required")
+		}
+		if pa.Method == "" {
+			return errors.New("project api method is required")
 		}
 	default:
 		return errors.New("invalid action specified")
