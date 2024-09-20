@@ -101,11 +101,13 @@ func (s *Server) UpdateProjectFolder(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-	_, err = auth.ExtractTokenID(r)
+	uid, err := auth.ExtractTokenID(r)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("unauthorized"))
 		return
 	}
+
+	projectFolder.UpdateBy = uint(uid)
 
 	_, err = projectFolder.UpdateProjectFolder(s.DB)
 	if err != nil {

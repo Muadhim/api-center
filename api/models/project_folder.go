@@ -14,6 +14,7 @@ type ProjectFolder struct {
 	ProjectID uint      `gorm:"index" json:"project_id"`
 	ParentID  *uint     `gorm:"index" json:"parent_id"`
 	AuthorID  uint      `gorm:"index;not null" json:"author_id"`
+	UpdateBy  uint      `gorm:"index" json:"update_by"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }
@@ -49,7 +50,13 @@ func (pf *ProjectFolder) SaveProjectFolder(db *gorm.DB) (*ProjectFolder, error) 
 }
 
 func (pf *ProjectFolder) UpdateProjectFolder(db *gorm.DB) (*ProjectFolder, error) {
-	err := db.Debug().Model(&ProjectFolder{}).Where("id = ?", pf.ID).Updates(map[string]interface{}{"name": pf.Name, "parent_id": pf.ParentID, "updated_at": time.Now()}).Error
+	err := db.Debug().Model(&ProjectFolder{}).
+		Where("id = ?", pf.ID).
+		Updates(map[string]interface{}{
+			"name":       pf.Name,
+			"parent_id":  pf.ParentID,
+			"update_by":  pf.UpdateBy,
+			"updated_at": time.Now()}).Error
 	if err != nil {
 		return &ProjectFolder{}, err
 	}
