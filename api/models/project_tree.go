@@ -8,6 +8,7 @@ type ProjectTree struct {
 	AuthorID uint           `gorm:"-" json:"author_id"`
 	Type     string         `gorm:"-" json:"type"`
 	Method   string         `gorm:"-" json:"method"`
+	ParentID *uint          `gorm:"-" json:"parent_id"`
 	Children []*ProjectTree `gorm:"-" json:"children"`
 }
 
@@ -31,6 +32,7 @@ func (pt *ProjectTree) GetProjectTree(db *gorm.DB, projectID uint) ([]*ProjectTr
 			ID:       folder.ID,
 			Name:     folder.Name,
 			AuthorID: folder.AuthorID,
+			ParentID: folder.ParentID,
 			Type:     "folder",
 			Method:   "",
 			Children: []*ProjectTree{},
@@ -46,6 +48,7 @@ func (pt *ProjectTree) GetProjectTree(db *gorm.DB, projectID uint) ([]*ProjectTr
 				AuthorID: api.AuthorID,
 				Type:     "api",
 				Method:   api.Method,
+				ParentID: &api.FolderID,
 				Children: nil, // APIs do not have children
 			})
 		}
