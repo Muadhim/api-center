@@ -64,11 +64,52 @@ func (pf *ProjectFolder) UpdateProjectFolder(db *gorm.DB) (*ProjectFolder, error
 }
 
 func (pf *ProjectFolder) DeleteProjectFolder(db *gorm.DB) (int64, error) {
-	db = db.Debug().Model(&ProjectFolder{}).Where("id = ?", pf.ID).Take((&ProjectFolder{})).Delete(&ProjectFolder{})
-	if db.Error != nil {
-		return 0, db.Error
+	var deleteFolder func(folderID uint) (int64, error)
+
+	deleteFolder = func(folderID uint) (int64, error) {
+		var folders []ProjectFolder
+
+		// Find all subfolders of the current folder
+		err := db.Debug().Where("parent_id = ?", folderID).Find(&folders).Error
+		if err != nil {
+			return 0, err
+		}
+
+		// Initialize a counter for total deleted items
+		totalDeleted := int64(0)
+
+		// Recursively delete each subfolder
+		for _, folder := range folders {
+			count, err := deleteFolder(folder.ID)
+			if err != nil {
+				return 0, err
+			}
+			totalDeleted += count
+		}
+
+		// Delete APIs associated with the current folder
+		result := db.Debug().Where("folder_id = ?", folderID).Delete(&ProjectApi{})
+		if result.Error != nil {
+			return 0, result.Error
+		}
+		totalDeleted += result.RowsAffected
+
+		// Delete the current folder
+		result = db.Debug().Where("id = ?", folderID).Delete(&ProjectFolder{})
+		if result.Error != nil {
+			return 0, result.Error
+		}
+		totalDeleted += result.RowsAffected
+
+		return totalDeleted, nil
 	}
-	return db.RowsAffected, nil
+
+	totalDeleted, err := deleteFolder(pf.ID)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalDeleted, nil
 }
 
 func (pf *ProjectFolder) GetProjectFolders(db *gorm.DB) (*ProjectFolder, error) {
