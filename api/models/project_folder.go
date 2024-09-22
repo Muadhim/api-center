@@ -14,7 +14,7 @@ type ProjectFolder struct {
 	ProjectID uint      `gorm:"index" json:"project_id"`
 	ParentID  *uint     `gorm:"index" json:"parent_id"`
 	AuthorID  uint      `gorm:"index;not null" json:"author_id"`
-	UpdateBy  uint      `gorm:"index" json:"update_by"`
+	UpdateBy  uint      `gorm:"index;default:null" json:"update_by"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }

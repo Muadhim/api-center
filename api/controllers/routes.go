@@ -48,8 +48,10 @@ func (s *Server) initializeRoutes(c *configs.Config) {
 
 	// project api
 	s.Router.HandleFunc(c.ApiVersion+"/project-api", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.CreateProjectApi))).Methods("POST")
-	s.Router.HandleFunc(c.ApiVersion+"/project-api/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.DeleteProjectApi))).Methods("DELETE")
+	s.Router.HandleFunc(c.ApiVersion+"/project-api/{projectId}/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.DeleteProjectApi))).Methods("DELETE")
 	s.Router.HandleFunc(c.ApiVersion+"/project-api", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.UpdateProjectApi))).Methods("PUT")
+	s.Router.HandleFunc(c.ApiVersion+"/project-api/detail", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.UpdateProjectApiDetail))).Methods("PUT")
+	s.Router.HandleFunc(c.ApiVersion+"/project-api/{projectId}/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.GetProjectApiDetail))).Methods("GET")
 
 	// Catch-all OPTIONS route for CORS
 	s.Router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
