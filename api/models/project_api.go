@@ -16,8 +16,9 @@ type ProjectApi struct {
 	UpdateBy        uint      `gorm:"index;default:null" json:"update_by"`
 	Method          string    `gorm:"type:varchar(255);not null" json:"method"`
 	Path            string    `gorm:"type:varchar(255)" json:"path"`
-	Header          string    `gorm:"type:text" json:"header"`
-	Body            string    `gorm:"type:text" json:"body"`
+	Request         string    `gorm:"type:text" json:"request"`
+	Response        string    `gorm:"type:text" json:"response"`
+	Description     string    `gorm:"type:text" json:"description"`
 	ExampleRequest  string    `gorm:"type:text" json:"example_request"`
 	ExampleResponse string    `gorm:"type:text" json:"example_response"`
 	ProjectID       uint      `gorm:"-" json:"project_id"`
@@ -64,11 +65,14 @@ func (pa *ProjectApi) Validate(action string) error {
 		if pa.Method == "" {
 			return errors.New("project api method is required")
 		}
-		if pa.Header == "" {
-			return errors.New("project api header is required")
+		if pa.Request == "" {
+			return errors.New("project api request is required")
 		}
-		if pa.Body == "" {
-			return errors.New("project api body is required")
+		if pa.Response == "" {
+			return errors.New("project api response is required")
+		}
+		if pa.Description == "" {
+			return errors.New("project api description is required")
 		}
 		if pa.ExampleRequest == "" {
 			return errors.New("project api example request is required")
@@ -126,16 +130,20 @@ func (pa *ProjectApi) UpdateDetailApi(db *gorm.DB, uid uint) (*ProjectApi, error
 		return &ProjectApi{}, err
 	}
 
+	updateData := map[string]interface{}{
+		"method":           pa.Method,
+		"path":             pa.Path,
+		"request":          pa.Request,
+		"response":         pa.Response,
+		"example_request":  pa.ExampleRequest,
+		"example_response": pa.ExampleResponse,
+		"description":      pa.Description,
+		"update_by":        pa.UpdateBy,
+		"updated_at":       time.Now(),
+	}
+
 	err = db.Debug().Model(&ProjectApi{}).Where("id = ?", pa.ID).
-		Updates(map[string]interface{}{
-			"method":           pa.Method,
-			"path":             pa.Path,
-			"header":           pa.Header,
-			"body":             pa.Body,
-			"example_request":  pa.ExampleRequest,
-			"example_response": pa.ExampleResponse,
-			"update_by":        pa.UpdateBy,
-			"updated_at":       time.Now()}).
+		Updates(updateData).
 		Error
 
 	if err != nil {
