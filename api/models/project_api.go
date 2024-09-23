@@ -90,8 +90,8 @@ func (pa *ProjectApi) Validate(action string) error {
 	return nil
 }
 
-func (pa *ProjectApi) SaveProjectApi(db *gorm.DB) (*ProjectApi, error) {
-	err := pa.checkUserInProject(db, pa.UpdateBy)
+func (pa *ProjectApi) SaveProjectApi(db *gorm.DB, uid uint) (*ProjectApi, error) {
+	err := pa.checkUserInProject(db, uid)
 	if err != nil {
 		return &ProjectApi{}, err
 	}

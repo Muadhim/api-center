@@ -40,7 +40,7 @@ func (s *Server) CreateProjectApi(w http.ResponseWriter, r *http.Request) {
 	}
 	projectApi.AuthorID = uint(tokenID)
 
-	projectApiCreated, err := projectApi.SaveProjectApi(s.DB)
+	projectApiCreated, err := projectApi.SaveProjectApi(s.DB, tokenID)
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
