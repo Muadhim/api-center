@@ -24,6 +24,8 @@ type ProjectApi struct {
 	ProjectID       uint      `gorm:"-" json:"project_id"`
 	CreatedAt       time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt       time.Time `gorm:"autoUpdateTime" json:"updated_at"`
+	Author          *User     `gorm:"foreignKey:AuthorID" json:"author"`
+	Updater         *User     `gorm:"foreignKey:UpdateBy" json:"updater"`
 }
 
 func (pa *ProjectApi) Validate(action string) error {
@@ -175,7 +177,12 @@ func (pa *ProjectApi) GetProjectApiDetail(db *gorm.DB, uid uint) (*ProjectApi, e
 		return &ProjectApi{}, err
 	}
 
-	err = db.Debug().Model(&ProjectApi{}).Where("id = ?", pa.ID).First(&pa).Error
+	err = db.Debug().
+		Preload("Author").
+		Preload("Updater").
+		Model(&ProjectApi{}).
+		Where("id = ?", pa.ID).
+		First(&pa).Error
 	if err != nil {
 		return &ProjectApi{}, err
 	}

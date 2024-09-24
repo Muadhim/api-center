@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"api-center/api/auth"
+	"api-center/api/helper"
 	"api-center/api/models"
 	"api-center/api/responses"
 	"encoding/json"
@@ -187,6 +188,25 @@ func (s *Server) GetProjectApiDetail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := projectApi.GetProjectApiDetail(s.DB, uid)
+
+	response := &responses.ProjectApi{
+		ID:              result.ID,
+		Name:            result.Name,
+		FolderID:        result.FolderID,
+		ProjectID:       result.ProjectID,
+		Path:            result.Path,
+		Method:          result.Method,
+		Request:         result.Request,
+		Response:        result.Response,
+		Description:     result.Description,
+		ExampleRequest:  result.ExampleRequest,
+		ExampleResponse: result.ExampleResponse,
+		UpdateBy:        helper.TransformUser(*result.Updater),
+		Author:          helper.TransformUser(*result.Author),
+		CreatedAt:       result.CreatedAt,
+		UpdatedAt:       result.UpdatedAt,
+	}
+
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
@@ -195,6 +215,6 @@ func (s *Server) GetProjectApiDetail(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, responses.JSONResponse{
 		Status:  http.StatusOK,
 		Message: "Project api successfully retrieved",
-		Data:    result,
+		Data:    response,
 	})
 }
