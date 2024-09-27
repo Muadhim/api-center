@@ -176,7 +176,7 @@ func (s *Server) GetProjectApiDetail(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
-	fmt.Println("id", id)
+
 	projectApi := models.ProjectApi{}
 	projectApi.ID = uint(id)
 	projectApi.ProjectID = uint(projectId)
@@ -188,6 +188,11 @@ func (s *Server) GetProjectApiDetail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := projectApi.GetProjectApiDetail(s.DB, uid)
+	var updater *responses.User
+	if result.Updater != nil {
+		temp := helper.TransformUser(*result.Updater)
+		updater = &temp
+	}
 
 	response := &responses.ProjectApi{
 		ID:              result.ID,
@@ -201,7 +206,7 @@ func (s *Server) GetProjectApiDetail(w http.ResponseWriter, r *http.Request) {
 		Description:     result.Description,
 		ExampleRequest:  result.ExampleRequest,
 		ExampleResponse: result.ExampleResponse,
-		UpdateBy:        helper.TransformUser(*result.Updater),
+		UpdateBy:        updater,
 		Author:          helper.TransformUser(*result.Author),
 		CreatedAt:       result.CreatedAt,
 		UpdatedAt:       result.UpdatedAt,

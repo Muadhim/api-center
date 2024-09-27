@@ -7,7 +7,7 @@ type ProjectApi struct {
 	Name            string    `json:"name"`
 	FolderID        uint      `json:"folder_id"`
 	Author          User      `json:"author"`
-	UpdateBy        User      `json:"update_by"`
+	UpdateBy        *User     `json:"update_by"`
 	Method          string    `json:"method"`
 	Path            string    `json:"path"`
 	Request         string    `json:"request"`
