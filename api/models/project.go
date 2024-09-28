@@ -85,7 +85,12 @@ func (p *Project) UpdateProjectMembers(db *gorm.DB) (*Project, error) {
 		if err != nil {
 			return &Project{}, err
 		}
-		p.Members = users
+		for _, u := range users {
+			// Check if user is not author
+			if u.ID != p.AuthorID {
+				p.Members = append(p.Members, u)
+			}
+		}
 	}
 
 	err = db.Debug().Save(&p).Error
@@ -139,6 +144,10 @@ func (p *Project) InviteProjectByToken(t string, uid uint, db *gorm.DB) (*Projec
 
 		// Update project members in the database
 		updatedProject, err := p.UpdateProjectMembers(db)
+
+		if uid == updatedProject.AuthorID {
+			return nil, fmt.Errorf("you are already the author of this project")
+		}
 		if err != nil {
 			return nil, err
 		}
