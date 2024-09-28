@@ -74,6 +74,7 @@ func (server *Server) UpdateProjectMembers(w http.ResponseWriter, r *http.Reques
 	}
 
 	project := models.Project{}
+	project.ID = uint(pid)
 	err = json.Unmarshal(body, &project)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
@@ -84,12 +85,6 @@ func (server *Server) UpdateProjectMembers(w http.ResponseWriter, r *http.Reques
 	err = project.Validate("update_member")
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
-		return
-	}
-
-	err = server.DB.Debug().Preload("Members").Where("id = ?", pid).Take(&project).Error
-	if err != nil {
-		responses.ERROR(w, http.StatusNotFound, errors.New("project not found"))
 		return
 	}
 
@@ -346,7 +341,7 @@ func (server *Server) ValidateInvitationToken(w http.ResponseWriter, r *http.Req
 
 	project := models.Project{}
 	// invite user to project
-	_, err = project.InviteProjectByToken(tokenValue, uint(uid), server.DB)
+	result, err := project.InviteProjectByToken(tokenValue, uint(uid), server.DB)
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
@@ -355,5 +350,6 @@ func (server *Server) ValidateInvitationToken(w http.ResponseWriter, r *http.Req
 	responses.JSON(w, responses.JSONResponse{
 		Status:  http.StatusOK,
 		Message: "Token validated successfully",
+		Data:    result.ID,
 	})
 }

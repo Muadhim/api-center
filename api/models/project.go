@@ -74,6 +74,10 @@ func (p *Project) DeleteProject(db *gorm.DB, pid uint32) (int64, error) {
 }
 
 func (p *Project) UpdateProjectMembers(db *gorm.DB) (*Project, error) {
+	err := db.Debug().Preload("Members").Where("id = ?", p.ID).Take(&p).Error
+	if err != nil {
+		return nil, err
+	}
 	// Fetch the users that correspond to the provided member IDs
 	if len(p.MemberIDs) > 0 {
 		user := User{}
@@ -84,7 +88,7 @@ func (p *Project) UpdateProjectMembers(db *gorm.DB) (*Project, error) {
 		p.Members = users
 	}
 
-	err := db.Debug().Save(&p).Error
+	err = db.Debug().Save(&p).Error
 	if err != nil {
 		return &Project{}, err
 	}
@@ -146,10 +150,10 @@ func (p *Project) InviteProjectByToken(t string, uid uint, db *gorm.DB) (*Projec
 }
 
 // FindProjectByID retrieves a project by its ID if the user is the author or a member
-func (p *Project) FindProjectByID(db *gorm.DB, pid uint, uid uint) ( error) {
+func (p *Project) FindProjectByID(db *gorm.DB, pid uint, uid uint) error {
 	err := db.Debug().Preload("Members").Where("id = ? AND (author_id = ? OR id IN (SELECT project_id FROM project_users WHERE user_id = ?))", pid, uid, uid).First(&p).Error
 	if err != nil {
 		return err
 	}
-	return  nil
+	return nil
 }
