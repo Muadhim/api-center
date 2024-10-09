@@ -189,3 +189,44 @@ func (server *Server) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		Data:    nil,
 	})
 }
+
+func (server *Server) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var request struct {
+		Otp         string `json:"otp"`
+		Email       string `json:"email"`
+		NewPassword string `json:"new_password"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	user := models.User{}
+	user.Email = request.Email
+	user.Password = request.NewPassword
+
+	otp := models.OtpStore{}
+	otp.Otp = request.Otp
+	otp.Email = request.Email
+	err := otp.ValidateOtp(server.DB)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	err = user.ChangePassword(server.DB)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	if err := otp.DeleteOtp(server.DB); err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(w, responses.JSONResponse{
+		Status:  http.StatusOK,
+		Message: "Password changed successfully",
+	})
+}

@@ -106,6 +106,26 @@ func (u *User) SaveUser(db *gorm.DB) (*User, error) {
 	return u, nil
 }
 
+func (u *User) ChangePassword(db *gorm.DB) error {
+	// To hash the password
+	err := u.BeforeSave()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db = db.Debug().Model(&User{}).Where("email = ?", u.Email).UpdateColumns(
+		map[string]interface{}{
+			"password":   u.Password,
+			"updated_at": time.Now(),
+		},
+	)
+
+	if db.Error != nil {
+		return db.Error
+	}
+	return nil
+}
+
 func (u *User) FindAllUser(db *gorm.DB) (*[]User, error) {
 	var err error
 
@@ -149,10 +169,10 @@ func (u *User) UpdateAUser(db *gorm.DB, uid uint32) (*User, error) {
 
 	db = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&User{}).UpdateColumns(
 		map[string]interface{}{
-			"password":  u.Password,
-			"name":      u.Name,
-			"email":     u.Email,
-			"update_at": time.Now(),
+			"password":   u.Password,
+			"name":       u.Name,
+			"email":      u.Email,
+			"updated_at": time.Now(),
 		},
 	)
 

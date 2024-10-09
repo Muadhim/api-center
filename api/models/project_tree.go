@@ -3,13 +3,13 @@ package models
 import "gorm.io/gorm"
 
 type ProjectTree struct {
-	ID       uint           `gorm:"-" json:"id"`
-	Name     string         `gorm:"-" json:"name"`
-	AuthorID uint           `gorm:"-" json:"author_id"`
-	Type     string         `gorm:"-" json:"type"`
-	Method   string         `gorm:"-" json:"method"`
-	ParentID *uint          `gorm:"-" json:"parent_id"`
-	Children []*ProjectTree `gorm:"-" json:"children"`
+	ID       uint           `json:"id"`
+	Name     string         `json:"name"`
+	AuthorID uint           `json:"author_id"`
+	Type     string         `json:"type"`
+	Method   string         `json:"method"`
+	ParentID *uint          `json:"parent_id"`
+	Children []*ProjectTree `json:"children"`
 }
 
 func (pt *ProjectTree) GetProjectTree(db *gorm.DB, projectID uint) ([]*ProjectTree, error) {

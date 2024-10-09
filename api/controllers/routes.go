@@ -53,6 +53,11 @@ func (s *Server) initializeRoutes(c *configs.Config) {
 	s.Router.HandleFunc(c.ApiVersion+"/project-api/detail", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.UpdateProjectApiDetail))).Methods("PUT")
 	s.Router.HandleFunc(c.ApiVersion+"/project-api/{projectId}/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.GetProjectApiDetail))).Methods("GET")
 
+	//forgot password
+	s.Router.HandleFunc(c.ApiVersion+"/forgot-password", middlewares.SetMiddlewareJSON(s.ForgotPassword)).Methods("POST")
+	s.Router.HandleFunc(c.ApiVersion+"/validate-otp", middlewares.SetMiddlewareJSON(s.ValidateOtp)).Methods("POST")
+	s.Router.HandleFunc(c.ApiVersion+"/send-otp", middlewares.SetMiddlewareJSON(s.SendOtp)).Methods("POST")
+
 	// Catch-all OPTIONS route for CORS
 	s.Router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodOptions {
