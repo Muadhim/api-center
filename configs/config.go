@@ -25,11 +25,11 @@ type Config struct {
 func LoadConfig() *Config {
 	config := &Config{}
 	envVars := map[string]*string{
-		"DB_HOST":            &config.DBHost,
+		"POSTGRES_HOST":      &config.DBHost,
 		"DB_PORT":            &config.DBPort,
-		"DB_USER":            &config.DBUser,
-		"DB_PASS":            &config.DBPass,
-		"DB_NAME":            &config.DBName,
+		"POSTGRES_USER":      &config.DBUser,
+		"POSTGRES_PASSWORD":  &config.DBPass,
+		"POSTGRES_DATABASE":  &config.DBName,
 		"SSL_MODE":           &config.SSLMode,
 		"SERVER_PORT":        &config.ServerPort,
 		"SET_MAX_IDLE_CONNS": &config.SetMaxIdleConns,
