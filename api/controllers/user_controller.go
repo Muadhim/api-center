@@ -215,12 +215,12 @@ func (server *Server) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	otp.Email = request.Email
 
 	if otp.Otp == "" {
-		http.Error(w, "otp is required", http.StatusBadRequest)
+		responses.ERROR(w, http.StatusUnprocessableEntity, errors.New("otp is required"))
 		return
 	}
 
 	if otp.Email == "" {
-		http.Error(w, "email is required", http.StatusBadRequest)
+		responses.ERROR(w, http.StatusUnprocessableEntity, errors.New("email is required"))
 		return
 	}
 	err := otp.ValidateOtp(server.DB)

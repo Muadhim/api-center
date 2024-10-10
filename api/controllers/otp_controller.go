@@ -4,6 +4,7 @@ import (
 	"api-center/api/models"
 	"api-center/api/responses"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -12,12 +13,12 @@ func (s *Server) SendOtp(w http.ResponseWriter, r *http.Request) {
 		Email string `json:"email"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
 
 	if request.Email == "" {
-		http.Error(w, "Email is required", http.StatusBadRequest)
+		responses.ERROR(w, http.StatusUnprocessableEntity, errors.New("email is required"))
 		return
 	}
 
@@ -44,11 +45,11 @@ func (s Server) ValidateOtp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if request.Email == "" {
-		http.Error(w, "Email is required", http.StatusBadRequest)
+		responses.ERROR(w, http.StatusUnprocessableEntity, errors.New("email is required"))
 		return
 	}
 	if request.Otp == "" {
-		http.Error(w, "Otp is required", http.StatusBadRequest)
+		responses.ERROR(w, http.StatusUnprocessableEntity, errors.New("otp is required"))
 		return
 	}
 	otp := models.OtpStore{}
