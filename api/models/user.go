@@ -74,6 +74,14 @@ func (u *User) Validate(action string) error {
 			return errors.New("invalid email")
 		}
 		return nil
+	case "forgot_password":
+		if u.Password == "" {
+			return errors.New("required password")
+		}
+		if u.Email == "" {
+			return errors.New("required email")
+		}
+		return nil
 
 	default:
 		if u.Name == "" {

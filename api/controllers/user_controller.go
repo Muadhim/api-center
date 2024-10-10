@@ -205,10 +205,24 @@ func (server *Server) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	user := models.User{}
 	user.Email = request.Email
 	user.Password = request.NewPassword
+	if err := user.Validate("forgot_password"); err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
 
 	otp := models.OtpStore{}
 	otp.Otp = request.Otp
 	otp.Email = request.Email
+
+	if otp.Otp == "" {
+		http.Error(w, "otp is required", http.StatusBadRequest)
+		return
+	}
+
+	if otp.Email == "" {
+		http.Error(w, "email is required", http.StatusBadRequest)
+		return
+	}
 	err := otp.ValidateOtp(server.DB)
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)

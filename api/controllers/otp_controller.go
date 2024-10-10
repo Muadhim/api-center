@@ -16,6 +16,11 @@ func (s *Server) SendOtp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if request.Email == "" {
+		http.Error(w, "Email is required", http.StatusBadRequest)
+		return
+	}
+
 	otp := models.OtpStore{}
 	otp.Email = request.Email
 	err := otp.SendOtp(s.DB)
@@ -36,6 +41,14 @@ func (s Server) ValidateOtp(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+	if request.Email == "" {
+		http.Error(w, "Email is required", http.StatusBadRequest)
+		return
+	}
+	if request.Otp == "" {
+		http.Error(w, "Otp is required", http.StatusBadRequest)
 		return
 	}
 	otp := models.OtpStore{}
