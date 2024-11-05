@@ -17,17 +17,17 @@ func (em *Email) SendEmail() error {
 	config := configs.LoadConfig()
 
 	mailer := gomail.NewMessage()
-	mailer.SetHeader("From", config.SmptUser)
+	mailer.SetHeader("From", config.SmtpUser)
 	mailer.SetHeader("To", em.Email)
-	mailer.SetAddressHeader("Cc", config.SmptUser, "Admin")
+	mailer.SetAddressHeader("Cc", config.SmtpUser, "Admin")
 	mailer.SetHeader("Subject", em.Subject)
 	mailer.SetBody("text/html", em.Message)
 
-	port, err := strconv.Atoi(config.SmptPort)
+	port, err := strconv.Atoi(config.SmtpPort)
 	if err != nil {
 		return err
 	}
-	dialer := gomail.NewDialer(config.SmptHost, port, config.SmptUser, config.SmptPass)
+	dialer := gomail.NewDialer(config.SmtpHost, port, config.SmtpUser, config.SmtpPass)
 
 	err = dialer.DialAndSend(mailer)
 	if err != nil {

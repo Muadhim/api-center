@@ -18,7 +18,7 @@ type Project struct {
 	AuthorID  uint      `gorm:"index;not null" json:"author_id"`
 	Members   []User    `gorm:"many2many:project_users" json:"members,omitempty"`
 	MemberIDs []uint    `gorm:"-" json:"member_ids"` // Use this field to capture the member IDs from the request\
-	GroupID   uint      `gorm:"index" json:"group_id"`
+	GroupID   uint      `gorm:"index;default:0" json:"group_id"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }

@@ -70,11 +70,13 @@ func (s *Server) DeleteProjectApi(w http.ResponseWriter, r *http.Request) {
 		ID:        uint(id),
 	}
 
-	_, err = auth.ExtractTokenID(r)
+	uid, err := auth.ExtractTokenID(r)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnauthorized, errors.New("unauthorized"))
 		return
 	}
+
+	projectApi.UpdateBy = uid
 
 	_, err = projectApi.DeleteProjectApi(s.DB)
 	if err != nil {

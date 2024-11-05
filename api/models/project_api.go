@@ -61,30 +61,6 @@ func (pa *ProjectApi) Validate(action string) error {
 		if pa.FolderID == 0 {
 			return errors.New("project folder ID is required")
 		}
-		if pa.Path == "" {
-			return errors.New("project api path is required")
-		}
-		if pa.Method == "" {
-			return errors.New("project api method is required")
-		}
-		if pa.Request == "" {
-			return errors.New("project api request is required")
-		}
-		if pa.Response == "" {
-			return errors.New("project api response is required")
-		}
-		if pa.Description == "" {
-			return errors.New("project api description is required")
-		}
-		if pa.ExampleRequest == "" {
-			return errors.New("project api example request is required")
-		}
-		if pa.ProjectID == 0 {
-			return errors.New("project ID is required")
-		}
-		if pa.ExampleResponse == "" {
-			return errors.New("project api example response is required")
-		}
 	default:
 		return errors.New("invalid action specified")
 	}
@@ -132,16 +108,33 @@ func (pa *ProjectApi) UpdateDetailApi(db *gorm.DB, uid uint) (*ProjectApi, error
 		return &ProjectApi{}, err
 	}
 
-	updateData := map[string]interface{}{
-		"method":           pa.Method,
-		"path":             pa.Path,
-		"request":          pa.Request,
-		"response":         pa.Response,
-		"example_request":  pa.ExampleRequest,
-		"example_response": pa.ExampleResponse,
-		"description":      pa.Description,
-		"update_by":        pa.UpdateBy,
-		"updated_at":       time.Now(),
+	updateData := make(map[string]interface{})
+	if pa.Method != "" {
+		updateData["method"] = pa.Method
+	}
+	if pa.Path != "" {
+		updateData["path"] = pa.Path
+	}
+	if pa.Request != "" {
+		updateData["request"] = pa.Request
+	}
+	if pa.Response != "" {
+		updateData["response"] = pa.Response
+	}
+	if pa.ExampleRequest != "" {
+		updateData["example_request"] = pa.ExampleRequest
+	}
+	if pa.ExampleResponse != "" {
+		updateData["example_response"] = pa.ExampleResponse
+	}
+	if pa.Description != "" {
+		updateData["description"] = pa.Description
+	}
+	if pa.UpdateBy != 0 {
+		updateData["update_by"] = pa.UpdateBy
+	}
+	if len(updateData) > 0 {
+		updateData["updated_at"] = time.Now()
 	}
 
 	err = db.Debug().Model(&ProjectApi{}).Where("id = ?", pa.ID).
