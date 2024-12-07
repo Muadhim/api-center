@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN go mod install \
+RUN go mod download \
   && go mod tidy \
   && CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o main main.go
 

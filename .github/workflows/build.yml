@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-      push-store-image:
+      push-image:
         runs-on: ubuntu-latest
         steps:
           - name: 'Checkout GitHub Action'
@@ -20,7 +20,7 @@ jobs:
               username: ${{github.actor}}
               password: ${{secrets.GITHUB_TOKEN}}
 
-          - name: 'Build Inventory Image'
+          - name: 'Build App Image'
             run: |
-              docker build . --tag ghcr.io/Muadhim/api-center:latest
-              docker push ghcr.io/Muadhim/api-center:latest
+              docker build . --tag ghcr.io/muadhim/api-center:latest
+              docker push ghcr.io/muadhim/api-center:latest
